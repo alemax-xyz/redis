@@ -51,6 +51,8 @@ FROM clover/base
 WORKDIR /
 COPY --from=build /build/image /
 
+VOLUME ["/var/lib/redis"]
+
 CMD ["redis-server", "/etc/redis/redis.conf"]
 
 EXPOSE 6379
