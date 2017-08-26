@@ -1,7 +1,13 @@
+#
+# This is a multi-stage build.
+# Actual build is at the very end.
+#
+
 FROM library/ubuntu:xenial AS build
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV LANG C.UTF-8
+
 RUN apt-get update && \
     apt-get install -y \
         python-software-properties \
@@ -11,10 +17,10 @@ RUN apt-get update && \
 RUN mkdir -p /build/image
 WORKDIR /build
 RUN apt-get download \
-    redis-sentinel \
-    redis-server \
-    redis-tools \
-    libjemalloc1
+        redis-sentinel \
+        redis-server \
+        redis-tools \
+        libjemalloc1
 RUN for file in *.deb; do dpkg-deb -x ${file} image/; done
 
 WORKDIR /build/image
