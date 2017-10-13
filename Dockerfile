@@ -1,58 +1,75 @@
-#
-# This is a multi-stage build.
-# Actual build is at the very end.
-#
+FROM clover/base AS base
+
+RUN groupadd \
+        --gid 50 \
+        --system \
+        redis \
+ && useradd \
+        --home-dir /var/lib/redis \
+        --no-create-home \
+        --system \
+        --shell /bin/false \
+        --uid 50 \
+        --gid 50 \
+        redis
 
 FROM library/ubuntu:xenial AS build
 
-ENV DEBIAN_FRONTEND noninteractive
-ENV LANG C.UTF-8
+ENV LANG=C.UTF-8
 
-RUN apt-get update && \
-    apt-get install -y \
+RUN export DEBIAN_FRONTEND=noninteractive \
+ && apt-get update \
+ && apt-get install -y \
         python-software-properties \
         software-properties-common \
         apt-utils
 
-RUN mkdir -p /build/image
+RUN mkdir -p /build /rootfs
 WORKDIR /build
-RUN apt-get download \
+RUN export DEBIAN_FRONTEND=noninteractive \
+ && apt-get download \
         redis-sentinel \
         redis-server \
         redis-tools \
         libjemalloc1
-RUN for file in *.deb; do dpkg-deb -x ${file} image/; done
+RUN find *.deb | xargs -I % dpkg-deb -x % /rootfs
 
-WORKDIR /build/image
+WORKDIR /rootfs
 RUN mkdir -p \
         var/log/redis \
         var/lib/redis \
-        run/redis && \
-    ln -s /dev/stdout var/log/redis/redis-server.log && \
-    ln -s /dev/stdout var/log/redis/redis-sentinel.log && \
-    rm -rf \
+        run/redis \
+ && ln -s /dev/stdout var/log/redis/redis-server.log \
+ && ln -s /dev/stdout var/log/redis/redis-sentinel.log \
+ && rm -rf \
         etc/default \
         etc/init.d \
         etc/logrotate.d \
         etc/redis/*.d \
         lib \
         usr/lib/tmpfiles.d \
-        usr/share && \
-    sed -i -r \
+        usr/share \
+ && sed -i -r \
         's,^ *daemonize +yes,daemonize no,g' \
-        etc/redis/redis.conf && \
-    sed -i -r \
+        etc/redis/redis.conf \
+ && sed -i -r \
         's,^ *daemonize +yes,daemonize no,g' \
         etc/redis/sentinel.conf
 
-
-FROM clover/base
+COPY --from=base /etc/group /etc/gshadow /etc/passwd /etc/shadow etc/
+COPY init.sh etc/
 
 WORKDIR /
-COPY --from=build /build/image /
+
+
+FROM clover/common
+
+ENV LANG=C.UTF-8
+
+COPY --from=build /rootfs /
 
 VOLUME ["/var/lib/redis"]
 
-CMD ["redis-server", "/etc/redis/redis.conf"]
+CMD ["sh", "/etc/init.sh"]
 
 EXPOSE 6379
