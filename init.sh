@@ -13,7 +13,7 @@ else
     test $(id -g "$PUSER") -eq $PGID || usermod --gid $PGID "$PUSER" || exit 2
 fi
 
-chown $PUID:$PGID -R /var/lib/redis /run/redis /var/log/redis || exit 2
+chown $PUID:$PGID /var/lib/redis /run/redis /var/log/redis || exit 2
 chmod a+w /dev/pts/0
 
 sudo -u "$PUSER" -g "$PGROUP" redis-server /etc/redis/redis.conf
