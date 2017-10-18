@@ -36,11 +36,8 @@ RUN find *.deb | xargs -I % dpkg-deb -x % /rootfs
 
 WORKDIR /rootfs
 RUN mkdir -p \
-        var/log/redis \
         var/lib/redis \
         run/redis \
- && ln -s /dev/stdout var/log/redis/redis-server.log \
- && ln -s /dev/stdout var/log/redis/redis-sentinel.log \
  && rm -rf \
         etc/default \
         etc/init.d \
@@ -50,10 +47,12 @@ RUN mkdir -p \
         usr/lib/tmpfiles.d \
         usr/share \
  && sed -i -r \
-        's,^ *daemonize +yes,daemonize no,g' \
+        -e 's,^ *logfile +.*,logfile "",g' \
+        -e 's,^ *daemonize +yes,daemonize no,g' \
         etc/redis/redis.conf \
  && sed -i -r \
-        's,^ *daemonize +yes,daemonize no,g' \
+        -e 's,^ *logfile +.*,logfile "",g' \
+        -e 's,^ *daemonize +yes,daemonize no,g' \
         etc/redis/sentinel.conf
 
 COPY --from=base /etc/group /etc/gshadow /etc/passwd /etc/shadow etc/

@@ -2,7 +2,9 @@
 
 test -z "$PUID" && PUID=50 || test "$PUID" -eq "$PUID" || exit 2
 PUSER=$(getent passwd $PUID | cut -d: -f1)
-test -n "$PUSER" || PUSER=$(getent passwd 50 | cut -d: -f1) && usermod --uid $PUID "$PUSER" || exit 2
+if [ -z "$PUSER" ]; then
+    PUSER=$(getent passwd 50 | cut -d: -f1) && usermod --uid $PUID "$PUSER" || exit 2
+fi
 
 test -z "$PGID" && PGID=$(id -g "$PUSER") || test "$PGID" -eq "$PGID" || exit 2
 PGROUP=$(getent group $PGID | cut -d: -f1)
@@ -13,7 +15,6 @@ else
     test $(id -g "$PUSER") -eq $PGID || usermod --gid $PGID "$PUSER" || exit 2
 fi
 
-chown $PUID:$PGID /var/lib/redis /run/redis /var/log/redis || exit 2
-chmod a+w /dev/pts/0
+chown $PUID:$PGID /var/lib/redis /run/redis || exit 2
 
 sudo -u "$PUSER" -g "$PGROUP" redis-server /etc/redis/redis.conf
