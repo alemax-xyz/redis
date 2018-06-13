@@ -46,6 +46,8 @@ RUN mkdir -p \
         usr/lib/tmpfiles.d \
         usr/share \
  && sed -i -r \
+        -e 's,^ *bind +.*,bind 127.0.0.1,g' \
+        -e 's,^ *protected-mode +.*,protected-mode no,g' \
         -e 's,^ *logfile +.*,logfile "",g' \
         -e 's,^ *daemonize +yes,daemonize no,g' \
         etc/redis/redis.conf \
