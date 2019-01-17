@@ -54,6 +54,7 @@ RUN mkdir -p \
  && sed -i -r \
         -e 's,^ *logfile +.*,logfile "",g' \
         -e 's,^ *daemonize +yes,daemonize no,g' \
+        -e 's,^ *always-show-logo +yes,always-show-logo no,g' \
         etc/redis/sentinel.conf
 
 COPY --from=base /etc/group /etc/gshadow /etc/passwd /etc/shadow etc/
