@@ -50,6 +50,7 @@ RUN mkdir -p \
         -e 's,^ *protected-mode +.*,protected-mode no,g' \
         -e 's,^ *logfile +.*,logfile "",g' \
         -e 's,^ *daemonize +yes,daemonize no,g' \
+        -e 's,^ *always-show-logo +yes,always-show-logo no,g' \
         etc/redis/redis.conf \
  && sed -i -r \
         -e 's,^ *logfile +.*,logfile "",g' \
@@ -58,7 +59,7 @@ RUN mkdir -p \
         etc/redis/sentinel.conf
 
 COPY --from=base /etc/group /etc/gshadow /etc/passwd /etc/shadow etc/
-COPY init.sh etc/
+COPY init/ etc/init/
 
 WORKDIR /
 
@@ -70,7 +71,5 @@ ENV LANG=C.UTF-8
 COPY --from=build /rootfs /
 
 VOLUME ["/var/lib/redis"]
-
-CMD ["sh", "/etc/init.sh"]
 
 EXPOSE 6379
