@@ -1,3 +1,3 @@
 #!/bin/sh
 
-sudo -u "$PUSER" -g "$PGROUP" redis-server /etc/redis/redis.conf
+exec sudo -u "$PUSER" -g "$PGROUP" redis-server /etc/redis/redis.conf
