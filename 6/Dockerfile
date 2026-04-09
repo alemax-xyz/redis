@@ -20,7 +20,6 @@ ENV LANG=C.UTF-8
 RUN export DEBIAN_FRONTEND=noninteractive \
  && apt-get update \
  && apt-get install -y \
-        software-properties-common \
         apt-utils
 
 RUN export DEBIAN_FRONTEND=noninteractive \
@@ -29,19 +28,16 @@ RUN export DEBIAN_FRONTEND=noninteractive \
         gnupg
 
 RUN export DEBIAN_FRONTEND=noninteractive \
- && curl https://packages.redis.io/gpg | apt-key add - \
- && echo "deb https://packages.redis.io/deb bookworm main" > /etc/apt/sources.list.d/redis.list \
+ && echo "deb [trusted=yes] https://packages.redis.io/deb trixie main" > /etc/apt/sources.list.d/redis.list \
  && apt-get update
 
 RUN mkdir -p /build /rootfs
 WORKDIR /build
 RUN export DEBIAN_FRONTEND=noninteractive \
  && apt-get download \
-        libsystemd0 \
         libgcrypt20 \
         libgpg-error0 \
         liblzma5 \
-        libzstd1 \
         liblz4-1 \
         'redis-sentinel=6:6*' \
         'redis-server=6:6*' \
@@ -58,9 +54,7 @@ RUN mkdir -p \
         etc/default \
         etc/init.d \
         etc/logrotate.d \
-        etc/redis/*.d \
-        lib/systemd \
-        usr/lib/tmpfiles.d \
+        usr/lib/systemd \
         usr/share \
  && sed -i -r \
         -e 's,^ *bind +.*,bind 0.0.0.0,g' \
@@ -76,7 +70,7 @@ RUN mkdir -p \
         etc/redis/sentinel.conf
 
 COPY --from=base /etc/group /etc/gshadow /etc/passwd /etc/shadow etc/
-COPY init/ etc/init/
+COPY etc/ etc/
 
 WORKDIR /
 
