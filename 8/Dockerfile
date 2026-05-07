@@ -18,17 +18,10 @@ FROM library/debian:stable-slim AS build
 ENV LANG=C.UTF-8
 
 RUN export DEBIAN_FRONTEND=noninteractive \
- && apt-get update \
- && apt-get install -y \
-        apt-utils
+ && apt-get update
 
 RUN export DEBIAN_FRONTEND=noninteractive \
- && apt-get install -y \
-        curl \
-        gnupg
-
-RUN export DEBIAN_FRONTEND=noninteractive \
- && echo "deb [trusted=yes] https://packages.redis.io/deb trixie main" > /etc/apt/sources.list.d/redis.list \
+ && echo "deb [trusted=yes] http://packages.redis.io/deb trixie main" > /etc/apt/sources.list.d/redis.list \
  && apt-get update
 
 RUN mkdir -p /build /rootfs
@@ -76,10 +69,9 @@ WORKDIR /
 
 FROM clover/common
 
-ENV LANG=C.UTF-8
+ENV LANG=C.UTF-8 \
+    REDIS_ARGS="/etc/redis/redis.conf"
 
 COPY --from=build /rootfs /
-
-VOLUME ["/var/lib/redis"]
 
 EXPOSE 6379
