@@ -5,7 +5,7 @@ RUN groupadd \
         --system \
         redis \
  && useradd \
-        --home-dir /var/lib/redis \
+        --home-dir /var/www \
         --no-create-home \
         --system \
         --shell /bin/false \
@@ -15,30 +15,35 @@ RUN groupadd \
 
 FROM library/debian:stable-slim AS build
 
-ENV LANG=C.UTF-8
+ENV LANG=C.UTF-8 \
+    SANDBOX_ROOT=/
 
 RUN export DEBIAN_FRONTEND=noninteractive \
- && apt-get update
+ && apt-get update \
+ && apt-get install -y wget openssl ca-certificates
 
-RUN export DEBIAN_FRONTEND=noninteractive \
- && echo "deb [trusted=yes] http://packages.redis.io/deb trixie main" > /etc/apt/sources.list.d/redis.list \
- && apt-get update
+ADD https://github.com/alemax-xyz/misc-tools.git#main /usr/local/bin/
 
 RUN mkdir -p /build /rootfs
+
 WORKDIR /build
-RUN export DEBIAN_FRONTEND=noninteractive \
- && apt-get download \
-        libgcrypt20 \
-        libgpg-error0 \
-        liblzma5 \
-        liblz4-1 \
-        'redis-sentinel=6:8*' \
-        'redis-server=6:8*' \
-        'redis-tools=6:8*' \
-        libjemalloc2
-RUN find *.deb | xargs -I % dpkg-deb -x % /rootfs
+
+COPY build/ .
+
+COPY --from=clover/common:latest /var/lib/packages/ var/lib/packages/
+
+RUN apt-sandbox --install --verstamp \
+        --apt-config \
+            APT::Install-Recommends=false \
+            APT::Get::Upgrade==false \
+        --repository . \
+        --keyring . \
+        --installed var/lib/packages \
+        --obsolete packages.obsolete \
+        --required packages.required
 
 WORKDIR /rootfs
+
 RUN mkdir -p \
         var/lib/redis \
         run/redis \
@@ -48,24 +53,20 @@ RUN mkdir -p \
         etc/logrotate.d \
         usr/lib/systemd \
         usr/share \
- && sed -i -r \
+ && sed -i -E \
+        -e 's,^ *logfile +.*,logfile "",g' \
         -e 's,^ *bind +.*,bind 0.0.0.0,g' \
         -e 's,^ *protected-mode +.*,protected-mode no,g' \
         -e 's,^ *logfile +.*,logfile "",g' \
         -e 's,^ *daemonize +yes,daemonize no,g' \
         -e 's,^ *always-show-logo +yes,always-show-logo no,g' \
         etc/redis/redis.conf \
- && sed -i -r \
-        -e 's,^ *logfile +.*,logfile "",g' \
-        -e 's,^ *daemonize +yes,daemonize no,g' \
-        -e 's,^ *always-show-logo +yes,always-show-logo no,g' \
         etc/redis/sentinel.conf
 
 COPY --from=base /etc/group /etc/gshadow /etc/passwd /etc/shadow etc/
-COPY etc/ etc/
+COPY rootfs/ .
 
 WORKDIR /
-
 
 FROM clover/common
 
