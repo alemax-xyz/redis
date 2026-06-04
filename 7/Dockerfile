@@ -50,6 +50,7 @@ RUN mkdir -p \
  && chmod a+rwx var/lib/redis run/redis \
  && rm -rf \
         etc/default \
+        etc/init.d \
         etc/logrotate.d \
         usr/lib/systemd \
         usr/share \

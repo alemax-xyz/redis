@@ -49,6 +49,7 @@ RUN mkdir -p \
         run/redis \
  && chmod a+rwx var/lib/redis run/redis \
  && rm -rf \
+        etc/init.d \
         etc/default \
         etc/logrotate.d \
         usr/lib/systemd \
